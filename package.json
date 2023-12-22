@@ -1,0 +1,20 @@
+{
+  "name": "restart-pon",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "clean": "rm -rf dist exec",
+    "build": "tsc && uglifyjs dist/index.js -c -m -o dist/index.min.js",
+    "build:exec": "yarn build && sh build-exec.sh",
+    "start": "node dist/index.js",
+    "start:dev": "ts-node src/index.ts",
+    "start:exec": "./exec/restart-pon"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "uglify-js": "^3.17.4"
+  }
+}
