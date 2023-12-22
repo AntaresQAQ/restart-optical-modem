@@ -12,23 +12,22 @@ interface IModemUtilOptions {
 
 class ModemUtil {
     private readonly options: IModemUtilOptions;
-    private readonly baseUrl: string;
+
     public constructor(options: IModemUtilOptions) {
         this.options = {
             ...options,
             protocol: options.protocol || "http",
             port: options.protocol === "https" ? 443 : 80,
         };
+    }
 
-        this.baseUrl = formatUrl({
+    private async getFrmLoginToken() {
+        const url = formatUrl({
             protocol: this.options.protocol,
             hostname: this.options.ip,
             port: this.options.port,
         });
-    }
-
-    private async getFrmLoginToken() {
-        const response = await fetch(this.baseUrl, {
+        const response = await fetch(url, {
             method: "GET",
         });
         const html = await response.text();
@@ -40,6 +39,11 @@ class ModemUtil {
     }
 
     private async postLogin(frmLoginToken: string) {
+        const url = formatUrl({
+            protocol: this.options.protocol,
+            hostname: this.options.ip,
+            port: this.options.port,
+        });
         const body = stringifyQuery({
             frashnum: "",
             action: "login",
@@ -49,7 +53,7 @@ class ModemUtil {
             textpwd: "",
             ieversion: "1",
         });
-        await fetch(this.baseUrl, {
+        await fetch(url, {
             method: "POST",
             body,
         });
@@ -57,7 +61,9 @@ class ModemUtil {
 
     private async getSessionToken() {
         const url = formatUrl({
-            href: this.baseUrl,
+            protocol: this.options.protocol,
+            hostname: this.options.ip,
+            port: this.options.port,
             pathname: "/web/cmcc/gch/template_user.gch",
         });
         const response = await fetch(url, {
@@ -78,9 +84,11 @@ class ModemUtil {
         });
 
         const url = formatUrl({
-            href: this.baseUrl,
+            protocol: this.options.protocol,
+            hostname: this.options.ip,
+            port: this.options.port,
             pathname: "/web/cmcc/gch/getpage.gch",
-            query,
+            search: query,
         });
 
         const body = stringifyQuery({
@@ -122,6 +130,7 @@ interface IAppConfig {
     badIncrease: number;
     goodReduce: number;
     restartEveryDayTime?: string;
+    startDelay?: number;
 }
 
 class App {
@@ -194,8 +203,15 @@ class App {
 
     private checking() {
         return setInterval(async () => {
+            if (this.isRestarting) {
+                console.log("Checking restarting status...");
+            }
             const delay = await this.checkingDelay();
             if (delay > this.config.expectedDelay) {
+                if (this.isRestarting) {
+                    console.log("Checked still restarting.");
+                    return;
+                }
                 this.currentBadCount += this.config.badIncrease;
                 console.log(
                     `Bad delay: ${delay}ms, excepted: ${this.config.expectedDelay}ms, count: ${this.currentBadCount}.`,
@@ -205,30 +221,23 @@ class App {
                     this.onBadChecked();
                 }
             } else {
+                if (this.isRestarting) {
+                    this.isRestarting = false;
+                    console.log("Restart successfully.");
+                }
                 if (this.currentBadCount > 0) {
                     this.currentBadCount -= this.config.goodReduce;
                     console.log(`Good delay: ${delay}ms, count: ${this.currentBadCount}.`);
                 }
-                this.onGoodChecked();
             }
         }, this.config.checkingInterval);
     }
 
     private onBadChecked() {
-        if (this.isRestarting) {
-            return;
-        }
         this.stopChecking();
         this.restartModem().then(() => {
             this.startChecking();
         });
-    }
-
-    private onGoodChecked() {
-        if (this.isRestarting) {
-            console.log("Restart successfully.");
-            this.isRestarting = false;
-        }
     }
 
     private stopChecking() {
@@ -291,8 +300,15 @@ class App {
     }
 
     public run() {
-        this.startChecking();
-        this.registerRestartEveryDay();
+        if (this.config.startDelay && this.config.startDelay > 0) {
+            setTimeout(() => {
+                this.startChecking();
+                this.registerRestartEveryDay();
+            }, this.config.startDelay);
+        } else {
+            this.startChecking();
+            this.registerRestartEveryDay();
+        }
     }
 }
 

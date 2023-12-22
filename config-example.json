@@ -10,5 +10,6 @@
     "maxBadCount": 15,
     "badIncrease": 2,
     "goodReduce": 1,
-    "restartEveryDayTime": "04:00:00"
+    "restartEveryDayTime": "04:00:00",
+    "startDelay": 60000
 }
