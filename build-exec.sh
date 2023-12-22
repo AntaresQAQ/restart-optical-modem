@@ -3,7 +3,7 @@ DIST_FILE=dist/index.min.js
 CONFIG_EXP=config-example.json
 
 EXEC_DIR=exec
-EXEC_CMD=restart-pon
+EXEC_CMD=restart-modem
 EXEC_CFG=config.json
 
 mkdir -p $EXEC_DIR

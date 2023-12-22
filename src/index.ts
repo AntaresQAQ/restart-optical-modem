@@ -2,7 +2,7 @@ import { stringify as stringifyQuery } from "querystring";
 import { format as formatUrl } from "url";
 import { readFileSync } from "fs";
 
-interface IPonUtilOptions {
+interface IModemUtilOptions {
     username: string;
     password: string;
     ip: string;
@@ -10,10 +10,10 @@ interface IPonUtilOptions {
     protocol?: "http" | "https";
 }
 
-class PonUtil {
-    private readonly options: IPonUtilOptions;
+class ModemUtil {
+    private readonly options: IModemUtilOptions;
     private readonly baseUrl: string;
-    public constructor(options: IPonUtilOptions) {
+    public constructor(options: IModemUtilOptions) {
         this.options = {
             ...options,
             protocol: options.protocol || "http",
@@ -126,7 +126,7 @@ interface IAppConfig {
 
 class App {
     private readonly config: IAppConfig;
-    private readonly ponUtil: PonUtil;
+    private readonly modemUtil: ModemUtil;
     private readonly restartEveryDayDate: Date = null;
 
     private currentBadCount: number = 0;
@@ -152,7 +152,7 @@ class App {
             this.restartEveryDayDate = this.parseDate(this.config.restartEveryDayTime);
         }
 
-        this.ponUtil = new PonUtil({
+        this.modemUtil = new ModemUtil({
             username: this.config.username,
             password: this.config.password,
             ip: this.config.ip,
@@ -231,7 +231,7 @@ class App {
         this.stopChecking();
         this.isRestarting = true;
         console.log("Restarting...");
-        this.ponUtil
+        this.modemUtil
             .restart()
             .catch((e) => {
                 console.error("Restart failed.");
@@ -280,7 +280,7 @@ class App {
             this.stopChecking();
             this.isRestarting = true;
             console.log("Restarting...");
-            this.ponUtil
+            this.modemUtil
                 .restart()
                 .catch((e) => {
                     console.error("Restart failed.");

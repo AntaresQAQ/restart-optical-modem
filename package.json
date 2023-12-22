@@ -1,7 +1,7 @@
 {
-  "name": "restart-pon",
+  "name": "restart-optical-modem",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
     "clean": "rm -rf dist exec",
@@ -9,7 +9,7 @@
     "build:exec": "yarn build && sh build-exec.sh",
     "start": "node dist/index.js",
     "start:dev": "ts-node src/index.ts",
-    "start:exec": "./exec/restart-pon"
+    "start:exec": "./exec/restart-modem"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
