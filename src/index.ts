@@ -214,41 +214,31 @@ class App {
         }, this.config.checkingInterval);
     }
 
-    private stopChecking() {
-        if (this.checkingIntervalHandler) {
-            clearInterval(this.checkingIntervalHandler);
-            this.checkingIntervalHandler = null;
-            this.isRestarting = false;
-            this.currentBadCount = 0;
-            console.log("Checking stop.");
-        }
-    }
-
-    private onBadChecked = () => {
+    private onBadChecked() {
         if (this.isRestarting) {
             return;
         }
         this.stopChecking();
-        this.isRestarting = true;
-        console.log("Restarting...");
-        this.modemUtil
-            .restart()
-            .catch((e) => {
-                console.error("Restart failed.");
-                console.error(e);
-                this.isRestarting = false;
-            })
-            .finally(() => {
-                this.startChecking();
-            });
-    };
+        this.restartModem().then(() => {
+            this.startChecking();
+        });
+    }
 
-    private onGoodChecked = () => {
+    private onGoodChecked() {
         if (this.isRestarting) {
             console.log("Restart successfully.");
             this.isRestarting = false;
         }
-    };
+    }
+
+    private stopChecking() {
+        if (this.checkingIntervalHandler) {
+            clearInterval(this.checkingIntervalHandler);
+            this.checkingIntervalHandler = null;
+            this.currentBadCount = 0;
+            console.log("Checking stop.");
+        }
+    }
 
     private startChecking() {
         if (this.checkingIntervalHandler) {
@@ -256,6 +246,21 @@ class App {
         }
         console.log("Checking start.");
         this.checkingIntervalHandler = this.checking();
+    }
+
+    private async restartModem() {
+        if (this.isRestarting) {
+            return;
+        }
+        this.isRestarting = true;
+        console.log("Restarting...");
+        try {
+            await this.modemUtil.restart();
+        } catch (e) {
+            console.error("Restart failed.");
+            console.error(e);
+            this.isRestarting = false;
+        }
     }
 
     private registerRestartEveryDay() {
@@ -278,18 +283,9 @@ class App {
 
         setTimeout(() => {
             this.stopChecking();
-            this.isRestarting = true;
-            console.log("Restarting...");
-            this.modemUtil
-                .restart()
-                .catch((e) => {
-                    console.error("Restart failed.");
-                    console.error(e);
-                    this.isRestarting = false;
-                })
-                .finally(() => {
-                    this.startChecking();
-                });
+            this.restartModem().then(() => {
+                this.startChecking();
+            });
             this.registerRestartEveryDay();
         }, diff);
     }
